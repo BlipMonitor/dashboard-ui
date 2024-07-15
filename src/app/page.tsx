@@ -1,31 +1,67 @@
-import { Avatar } from '@/components/avatar'
-import { Badge } from '@/components/badge'
-import { Divider } from '@/components/divider'
+'use client'
+
 import { Heading, Subheading } from '@/components/heading'
 import { Select } from '@/components/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
-import { getRecentOrders } from '@/data'
+import { useEffect, useState } from 'react'
+import { Stat } from '@/components/stat'
+import { LedgerRecord } from '@/types/types'
 
-export function Stat({ title, value, change }: { title: string; value: string; change: string }) {
-  return (
-    <div>
-      <Divider />
-      <div className="mt-6 text-lg/6 font-medium sm:text-sm/6">{title}</div>
-      <div className="mt-3 text-3xl/8 font-semibold sm:text-2xl/8">{value}</div>
-      <div className="mt-3 text-sm/6 sm:text-xs/6">
-        <Badge color={change.startsWith('+') ? 'lime' : 'pink'}>{change}</Badge>{' '}
-        <span className="text-zinc-500">from last week</span>
-      </div>
-    </div>
-  )
-}
+/**
+ * Functional component representing the Home page.
+ */
+export default function Home() {
+  const [ledgerData, setLedgerData] = useState<LedgerRecord[]>([])
 
-export default async function Home() {
-  let orders = await getRecentOrders()
+  useEffect(() => {
+    const websocketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL
+    if (!websocketUrl) {
+      console.error('WebSocket URL is not defined')
+      return
+    }
+
+    const ws = new WebSocket(websocketUrl)
+
+    ws.onopen = () => {
+      console.log('WebSocket connection established')
+    }
+
+    ws.onmessage = (event) => {
+      console.log('WebSocket message received:', event.data)
+      const message = JSON.parse(event.data)
+      if (message.type === 'ledger') {
+        const updatedLedger = message.data
+        setLedgerData((prevLedgers) => {
+          const existingLedgerIndex = prevLedgers.findIndex((ledger) => ledger.id === updatedLedger.id)
+          if (existingLedgerIndex !== -1) {
+            const updatedLedgers = [...prevLedgers]
+            updatedLedgers[existingLedgerIndex] = updatedLedger
+            return updatedLedgers
+          } else {
+            return [updatedLedger, ...prevLedgers]
+          }
+        })
+      }
+    }
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error)
+    }
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed')
+    }
+
+    return () => {
+      ws.close()
+    }
+  }, [])
 
   return (
     <>
-      <Heading>Good afternoon, Erica</Heading>
+      <Heading>Good afternoon, Bhaven</Heading>
+
+      {/* Overview section with select dropdown */}
       <div className="mt-8 flex items-end justify-between">
         <Subheading>Overview</Subheading>
         <div>
@@ -37,36 +73,55 @@ export default async function Home() {
           </Select>
         </div>
       </div>
+
+      {/* Statistics grid */}
       <div className="mt-4 grid gap-8 sm:grid-cols-2 xl:grid-cols-4">
         <Stat title="Total revenue" value="$2.6M" change="+4.5%" />
         <Stat title="Average order value" value="$455" change="-0.5%" />
         <Stat title="Tickets sold" value="5,888" change="+4.5%" />
         <Stat title="Pageviews" value="823,067" change="+21.2%" />
       </div>
-      <Subheading className="mt-14">Recent orders</Subheading>
+
+      {/* Recent ledger data table */}
+      <Subheading className="mt-14">Recent ledger data</Subheading>
       <Table className="mt-4 [--gutter:theme(spacing.6)] lg:[--gutter:theme(spacing.10)]">
         <TableHead>
           <TableRow>
-            <TableHeader>Order number</TableHeader>
-            <TableHeader>Purchase date</TableHeader>
-            <TableHeader>Customer</TableHeader>
-            <TableHeader>Event</TableHeader>
-            <TableHeader className="text-right">Amount</TableHeader>
+            <TableHeader>ID</TableHeader>
+            <TableHeader>Hash</TableHeader>
+            <TableHeader>Previous Hash</TableHeader>
+            <TableHeader>Sequence</TableHeader>
+            <TableHeader>Successful Transactions</TableHeader>
+            <TableHeader>Failed Transactions</TableHeader>
+            <TableHeader>Operation Count</TableHeader>
+            <TableHeader>TX Set Operation Count</TableHeader>
+            <TableHeader>Closed At</TableHeader>
+            <TableHeader>Total Coins</TableHeader>
+            <TableHeader>Fee Pool</TableHeader>
+            <TableHeader>Base Fee (Stroops)</TableHeader>
+            <TableHeader>Base Reserve (Stroops)</TableHeader>
+            <TableHeader>Max TX Set Size</TableHeader>
+            <TableHeader>Protocol Version</TableHeader>
           </TableRow>
         </TableHead>
         <TableBody>
-          {orders.map((order) => (
-            <TableRow key={order.id} href={order.url} title={`Order #${order.id}`}>
-              <TableCell>{order.id}</TableCell>
-              <TableCell className="text-zinc-500">{order.date}</TableCell>
-              <TableCell>{order.customer.name}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Avatar src={order.event.thumbUrl} className="size-6" />
-                  <span>{order.event.name}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-right">US{order.amount.usd}</TableCell>
+          {ledgerData.map((ledger) => (
+            <TableRow key={ledger.id} href={ledger.paging_token} title={`Ledger #${ledger.id}`}>
+              <TableCell>{ledger.id}</TableCell>
+              <TableCell>{ledger.hash}</TableCell>
+              <TableCell>{ledger.prev_hash}</TableCell>
+              <TableCell>{ledger.sequence}</TableCell>
+              <TableCell>{ledger.successful_transaction_count}</TableCell>
+              <TableCell>{ledger.failed_transaction_count}</TableCell>
+              <TableCell>{ledger.operation_count}</TableCell>
+              <TableCell>{ledger.tx_set_operation_count}</TableCell>
+              <TableCell>{new Date(ledger.closed_at).toLocaleString()}</TableCell>
+              <TableCell>{ledger.total_coins}</TableCell>
+              <TableCell>{ledger.fee_pool}</TableCell>
+              <TableCell>{ledger.base_fee_in_stroops}</TableCell>
+              <TableCell>{ledger.base_reserve_in_stroops}</TableCell>
+              <TableCell>{ledger.max_tx_set_size}</TableCell>
+              <TableCell>{ledger.protocol_version}</TableCell>
             </TableRow>
           ))}
         </TableBody>
