@@ -130,9 +130,9 @@ export function ApplicationLayout({
                 <HomeIcon />
                 <SidebarLabel>Home</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="/events" current={pathname.startsWith('/events')}>
+              <SidebarItem href="/alerts" current={pathname.startsWith('/alerts')}>
                 <Square2StackIcon />
-                <SidebarLabel>Events</SidebarLabel>
+                <SidebarLabel>Alerts</SidebarLabel>
               </SidebarItem>
               <SidebarItem href="/contracts" current={pathname.startsWith('/contracts')}>
                 <TicketIcon />

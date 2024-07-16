@@ -57,3 +57,30 @@ export interface Order {
     name: string;
   };
 }
+
+/**
+ * Represents the structure of an event.
+ */
+export interface Event {
+  id: number; // Change from string to number
+  name: string;
+  date: string;
+  time: string;
+  location: string;
+  ticketsSold: number;
+  ticketsAvailable: number;
+  status: string;
+  url: string;
+  imgUrl: string;
+}
+
+/**
+ * Represents the structure of an alert.
+ */
+export interface Alert {
+  id: string;
+  alertType: string;
+  status: string;
+  details: Record<string, unknown>;
+  createdAt: string;
+}

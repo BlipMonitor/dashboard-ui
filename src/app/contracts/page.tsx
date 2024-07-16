@@ -8,7 +8,7 @@ import { getOrders } from '@/data'
 import { ContractInteraction, Order } from '@/types/types'
 import { useEffect, useState } from 'react'
 
-export default function Orders() {
+export default function Contracts() {
   const [contractInteractions, setContractInteractions] = useState<ContractInteraction[]>([])
   const [orders, setOrders] = useState<Order[]>([]) // Explicitly define the type
 
@@ -17,7 +17,12 @@ export default function Orders() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/contract/events`)
         const data = await response.json()
-        setContractInteractions(data)
+        console.log('Fetched contract interactions:', data) // Log the fetched data
+        if (Array.isArray(data)) {
+          setContractInteractions(data)
+        } else {
+          console.error('Expected an array but got:', data)
+        }
       } catch (error) {
         console.error('Failed to fetch contract interactions:', error)
       }
@@ -53,7 +58,7 @@ export default function Orders() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {contractInteractions.map((interaction) => (
+          {contractInteractions.slice(0, 10).map((interaction) => (
             <TableRow key={interaction.id}>
               <TableCell>{interaction.id}</TableCell>
               <TableCell>{interaction.contractName}</TableCell>
