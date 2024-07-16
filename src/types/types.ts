@@ -20,3 +20,40 @@ export interface LedgerRecord {
   protocol_version: number;
   header_xdr: string;
 }
+
+/**
+ * Represents the structure of a contract interaction.
+ */
+export interface ContractInteraction {
+  id: string;
+  contractName: string;
+  interactionType: string;
+  timestamp: string;
+}
+
+export interface Order {
+  id: number;
+  url: string;
+  date: string;
+  amount: {
+    usd: string;
+    cad: string;
+    fee: string;
+    net: string;
+  };
+  payment: {
+    transactionId: string;
+    card: {
+      number: string;
+      type: string;
+      expiry: string;
+    };
+  };
+  customer: {
+    name: string;
+  };
+  event: {
+    thumbUrl: string;
+    name: string;
+  };
+}

@@ -1,17 +1,28 @@
 'use client'
 
+import { Avatar } from '@/components/avatar'
 import { Heading, Subheading } from '@/components/heading'
 import { Select } from '@/components/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
-import { useEffect, useState } from 'react'
 import { Stat } from '@/components/stat'
-import { LedgerRecord } from '@/types/types'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/table'
+import { getRecentOrders } from '@/data'
+import { LedgerRecord, Order } from '@/types/types'
+import { useEffect, useState } from 'react'
 
 /**
  * Functional component representing the Home page.
  */
 export default function Home() {
+  const [orders, setOrders] = useState<Order[]>([])
   const [ledgerData, setLedgerData] = useState<LedgerRecord[]>([])
+
+  useEffect(() => {
+    async function fetchOrders() {
+      let orders = await getRecentOrders()
+      setOrders(orders)
+    }
+    fetchOrders()
+  }, [])
 
   useEffect(() => {
     const websocketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL
@@ -105,7 +116,7 @@ export default function Home() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {ledgerData.map((ledger) => (
+          {ledgerData.slice(0, 10).map((ledger) => (
             <TableRow key={ledger.id} href={ledger.paging_token} title={`Ledger #${ledger.id}`}>
               <TableCell>{ledger.id}</TableCell>
               <TableCell>{ledger.hash}</TableCell>
@@ -122,6 +133,35 @@ export default function Home() {
               <TableCell>{ledger.base_reserve_in_stroops}</TableCell>
               <TableCell>{ledger.max_tx_set_size}</TableCell>
               <TableCell>{ledger.protocol_version}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <Subheading className="mt-14">Recent orders</Subheading>
+      <Table className="mt-4 [--gutter:theme(spacing.6)] lg:[--gutter:theme(spacing.10)]">
+        <TableHead>
+          <TableRow>
+            <TableHeader>Order number</TableHeader>
+            <TableHeader>Purchase date</TableHeader>
+            <TableHeader>Customer</TableHeader>
+            <TableHeader>Event</TableHeader>
+            <TableHeader className="text-right">Amount</TableHeader>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {orders.map((order) => (
+            <TableRow key={order.id} href={order.url} title={`Order #${order.id}`}>
+              <TableCell>{order.id}</TableCell>
+              <TableCell className="text-zinc-500">{order.date}</TableCell>
+              <TableCell>{order.customer.name}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Avatar src={order.event.thumbUrl} className="size-6" />
+                  <span>{order.event.name}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">US{order.amount.usd}</TableCell>
             </TableRow>
           ))}
         </TableBody>
