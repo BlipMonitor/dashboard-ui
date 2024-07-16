@@ -1,6 +1,6 @@
-# Catalyst Demo
+# Blip Demo
 
-To run the Catalyst demo, first install the npm dependencies:
+To run the Blip demo, first install the npm dependencies:
 
 ```bash
 npm install
